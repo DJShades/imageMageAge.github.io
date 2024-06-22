@@ -191,65 +191,6 @@ function toggleInputMenu(){
     }
 }
 
-// function showDefaultImage() {
-    
-//     var defaultImage = new Image();
-//     defaultImage.src = 'images/HK2024.jpg';
-
-//     defaultImage.onload = () => {
-
-//         actualWidth = defaultImage.width;
-//         actualHeight = defaultImage.height;
-
-//         const scaled = imageScaler(defaultImage, 1)
-
-//         newCanvas = document.createElement('canvas');
-//         newCtx = newCanvas.getContext('2d');
-
-//         newCanvas.width = defaultImage.width; //actualWidth;
-//         newCanvas.height = defaultImage.height; //actualHeight;
-
-//         newCtx.drawImage(defaultImage, 0, 0);
-
-//         const newImageData = newCanvas.toDataURL();
-//         const newImage = new Image();
-//         newImage.src = newImageData;
-//         newImage.style.width = `${scaled.w}px`;
-//         document.getElementById('imageContainer').appendChild(newImage)
-
-//         //imageContainer.appendChild(newImage);
-
-//         var img = document.getElementById('imageContainer').querySelector('img'); //imageContainer.querySelector('img');
-
-//         img.onload = () => {
-//             const canvas = document.createElement('canvas');
-//             canvas.width = defaultImage.width;
-//             canvas.height = defaultImage.height;
-//             const ctx = canvas.getContext('2d');
-//             ctx.drawImage(img, 0, 0);
-//             pixels = ctx.getImageData(0, 0, defaultImage.width, defaultImage.height).data;
-//             isImageLoaded = true;
-//             drawNewImage();
-
-//             img.addEventListener('click', (e) => {
-//                 let clickPos = {x: e.offsetX / scaled.ratio, y: e.offsetY / scaled.ratio}; 
-//                 console.log(`Clicked at (${clickPos.x}, ${clickPos.y})`);
-//                 if(visualizationChoice=="grid"){
-//                     drawNewImage(pixels, clickPos);
-//                 }
-//             });
-
-//             window.scrollTo(0, 0);
-//         }
-
-//     }
-// }
-
-// ----------------------------------------------------------------------------------------
-// BELOW OF THE BEGINNINGS OF FUNCTIONS WHICH SEPERATE THE RESPONSIBILITIES FOR FILE READING
-// AND IMAGE PARSING... This way both the default image and user input images can be 
-// parsed by *one* function instead of two nearly identical functions.
-
 function getFile(file){
     let reader = new FileReader();
      reader.onload = (event) => {
@@ -314,70 +255,6 @@ function parseImage(imageData, imagesOnscreen = 2, defaultImage = false){
     }
 }
 //--------------------------------------------------------------------------------------------
-
-function readSourceImage(){
-
-    console.log("NOT BEING CALLED!")
-
-
-    //remove any existing images
-    let imageContainer = document.getElementById('imageContainer');
-    while (imageContainer.firstChild) {
-        imageContainer.removeChild(imageContainer.firstChild);
-    }
-
-    let newImageContainer = document.getElementById('newImageContainer');
-    while (newImageContainer.firstChild) {
-        newImageContainer.removeChild(newImageContainer.firstChild);
-    }
-
-//read image file      
-  var file = imageInput.files[0];
-  var reader = new FileReader();
-  reader.onload = (event) => {
-    // var imageData = event.target.result;
-    var image = new Image();
-    image.src = event.target.result; //imageData;
-    image.onload = () => {
-      
-        actualWidth = image.width;
-        actualHeight = image.height;
-            
-        const scaled = imageScaler(image, 2);
-
-        // Create
-        var originalImg = document.createElement('img');
-        originalImg.src = image.src; 
-        originalImg.width = scaled.w;
-        originalImg.height = scaled.h;
-        document.getElementById('imageContainer').appendChild(originalImg);
-
-        // Get the pixel colors
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = image.width; 
-        canvas.height = image.height;
-        ctx.drawImage(image, 0, 0);
-        pixels = ctx.getImageData(0, 0, image.width, image.height).data;
-
-        //add click position event listener
-        originalImg.addEventListener('click', (e) => {
-            let clickPos = {x: e.offsetX / scaled.ratio, y: e.offsetY / scaled.ratio};
-            console.log(`Clicked at (${clickPos.x}, ${clickPos.y})`);
-            if (visualizationChoice == "grid"){
-                drawNewImage(pixels, clickPos);
-            }
-        });
-
-        refresh();
-
-    };
-  };
-  reader.readAsDataURL(file);
-
-  isImageLoaded = true;
-
-}
 
 function imageScaler(source, wMultiplier){
 

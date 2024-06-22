@@ -1,45 +1,6 @@
-var imageInput = document.getElementById('imageInput');
-var imageContainer = document.getElementById('imageContainer');
-var pixelColors = document.getElementById('pixelColors');
-var newImageContainer = document.getElementById('newImageContainer');
-var originalImage;
-var clickXPosition;
-var clickYPosition;
-var visualizationChoiceMenu = document.getElementById('visualizationChoice');
-var visualizationChoice = visualizationChoiceMenu.value;
+//var pixelColors = document.getElementById('pixelColors');
+
 var loadingScreen = document.getElementById("coverScreen");
-
-var redInput = document.getElementById('red');
-var greenInput = document.getElementById('green');
-var blueInput = document.getElementById('blue');
-var alphaInput = document.getElementById('alpha');
-
-var smearWidthInput = document.getElementById('smearWidth');
-var smearWidth = smearWidthInput.value;
-var chosenPixelInput = document.getElementById('chosenPixel');
-var chosenPixel = chosenPixelInput.value;
-
-var noiseProbabilityInput = document.getElementById('noiseProbability');
-var noiseProbability = noiseProbabilityInput.value;
-
-var noiseColorRangeInput = document.getElementById('noiseColorRange');
-var noiseColorRange = noiseColorRangeInput.value;
-var rgbColorRange = noiseColorRange/100 * 255;
-
-var dotSizeFactorInput = document.getElementById('dotSizeFactor');
-var dotSizeFactor = dotSizeFactorInput.value;
-
-//color pickers
-var paletteChoiceInput = document.getElementById('paletteChoice');
-var colorPicker = document.getElementById('color-picker');
-var colorPicker2 = document.getElementById('color-picker2');
-var colorPicker3 = document.getElementById('color-picker3');
-var colorPicker4 = document.getElementById('color-picker4');
-var colorPicker5 = document.getElementById('color-picker5');
-var colorPicker6 = document.getElementById('color-picker6');
-var pickers = [colorPicker, colorPicker2, colorPicker3, colorPicker4, colorPicker5, colorPicker6];
-
-var backgroundColorInput = document.getElementById('backgroundColorInput');
 
 var palettePresets = [
     {name: "mage", displayName: "Mage", palette: ["#0066A4","#640000","#006400","#FFC300","#FFFFFF","#000000"]},
@@ -52,7 +13,6 @@ var palettePresets = [
     {name: "primary", displayName: "Primary", palette: ["#c90000","#fff400","#0004ff","#ffffff","#ffffff","#000000"]},
     {name: "custom", displayName: "Custom >>", palette: ["#FFFFFF","#DDDDDD","#BBBBBB","#000000","#000000","#000000"]}
 ];
-
 var chosenPalette = palettePresets[0].palette;
 
 //set as equal to mage palette upon first load, in RGB space
@@ -65,103 +25,129 @@ var chosenPaletteRGBValues = [
     [0, 0, 0]
 ];
 
-//fill the paletteChoice HTML element dynamically
-palettePresets.forEach((preset) => {
-    const option = document.createElement('option');
-    option.value = preset.name;
-    option.text = preset.displayName;
-    paletteChoiceInput.appendChild(option);
-});
-
-var paletteChoice = paletteChoiceInput.value;
-
 var isImageLoaded = false;
 
-var redrawButton = document.getElementById('generate-button');
-redrawButton.addEventListener('click', refresh);
+// var screenWidth = window.innerWidth; // get the width of the browser screen
 
-var screenWidth = window.innerWidth; // get the width of the browser screen
-var maxImageWidth = (screenWidth*0.96) / 2; // max width for each of the two images
-var maxImageHeight = window.innerHeight * 0.78;
-console.log("max image dimensions: "+maxImageWidth+", "+maxImageHeight);
-
-//Pop-up for grid visual style
-var popup = document.querySelector('.popup');
-
-// hide the popup when the user clicks on the image
-popup.addEventListener('click', () => {
-    popup.style.display = 'none';
-});
-
-var gridLoadCounter = 0;
-
-//Save and export the new image in png format
-var saveButton = document.getElementById('save-image-button');
-
-saveButton.addEventListener('click', () => {
-    saveImage();
-});
+var WINDOWREDUCTIONS = {
+    w: 0.96,
+    h: 0.78
+}
 
 var actualWidth;
 var actualHeight;
-var scaledWidth;
-var scaledHeight;
-var widthScalingRatio;
-
-var backgroundColor = backgroundColorInput.value;
 
 var newCanvas = document.createElement('canvas');
 var newCtx = newCanvas.getContext('2d');
 
-var pixelData;
 var pixels;
 
-var redShift = redInput.value;
-var greenShift = greenInput.value;
-var blueShift = blueInput.value;
-var alphaShift = alphaInput.value;
-
-
 // Add event listeners to the input boxes
-imageInput.addEventListener('change', readSourceImage);
 
-visualizationChoiceMenu.addEventListener('change',refresh);
-redInput.addEventListener('change', refresh);
-greenInput.addEventListener('change', refresh);
-blueInput.addEventListener('change', refresh);
-alphaInput.addEventListener('change', refresh);
-smearWidthInput.addEventListener('change', refresh);
-chosenPixelInput.addEventListener('change', refresh);
-noiseProbabilityInput.addEventListener('change', refresh);
-noiseColorRangeInput.addEventListener('change', refresh);
-dotSizeFactorInput.addEventListener('change', refresh);
+var visualizationChoiceMenu = document.getElementById('visualizationChoice');
+var visualizationChoice = visualizationChoiceMenu.value;
+visualizationChoiceMenu.addEventListener('change', refresh);
 
-paletteChoiceInput.addEventListener('change', changePalette);
+var imageInput = document.getElementById('imageInput');
+// ORIGINAL FUNCTION CALL...
+imageInput.addEventListener('change', (e) => {
+    //readSourceImage(imageInput.value);
+});
+// NEW FUNCTION CALL...
+imageInput.addEventListener('change', (e) => {
+    getFile(imageInput.files[0]);
 
+});
+
+var redrawButton = document.getElementById('generate-button');
+redrawButton.addEventListener('click', refresh);
+
+var saveButton = document.getElementById('save-image-button');
+saveButton.addEventListener('click', () => {
+    saveImage();
+});
+
+function getRGBAInput(){
+    let red = document.getElementById('red');
+    red.addEventListener('change', refresh);
+    let green = document.getElementById('green');
+    green.addEventListener('change', refresh);
+    let blue = document.getElementById('blue');
+    blue.addEventListener('change', refresh);
+    let alpha = document.getElementById('alpha');
+    alpha.addEventListener('change', refresh);
+    return {r: red.value, g: green.value, b: blue.value, a: alpha.value}
+}
+
+function inputSmearWidth(){
+    let smear = document.getElementById('smearWidth');
+    smear.addEventListener('change', refresh);
+    return minmax(smear.value)
+}
+
+function inputChosenPixel(){
+    let pixel = document.getElementById('chosenPixel');
+    chosenPixelInput.addEventListener('change', refresh);
+    return minmax(pixel.value)
+}
+
+function inputNoiseProbability(){
+    let noise = document.getElementById('noiseProbability');
+    noise.addEventListener('change', refresh);
+    return minmax(noise.value)
+}
+
+function inputNoiseColorRange(){
+    let range = document.getElementById('noiseColorRange');
+    range.addEventListener('change', refresh);
+    return minmax(range.value)
+}
+
+function rgbColorRange(){
+    return inputNoiseColorRange() / 100 * 255;
+}
+
+function inputDotSizeFactor(){
+    let dsf = document.getElementById('dotSizeFactor');
+    dsf.addEventListener('change', refresh);
+    return minmax(dsf.value)
+}
+
+var backgroundColorInput = document.getElementById('backgroundColorInput');
+var backgroundColor = backgroundColorInput.value;
+
+function minmax(input){
+    return Math.min(100, Math.max(0, Number(input)));
+}
 
 //main method
 initPhotoCarousel();
 getUserInputs();
-initColorPickers();
-showDefaultImage();
+initPaletteControls();
+
+parseImage('images/HK2024.jpg', 1, true);
+//showDefaultImage();
+
+
 
 // Grab new user inputs from control menu
 function getUserInputs() {
+    console.log("getUserInputs()")
 
     visualizationChoice = String(visualizationChoiceMenu.value);
 
-    redShift = parseInt(redInput.value);
-    greenShift = parseInt(greenInput.value);
-    blueShift = parseInt(blueInput.value);
-    alphaShift = parseFloat(alphaInput.value);
+    // redShift = parseInt(redInput.value);
+    // greenShift = parseInt(greenInput.value);
+    // blueShift = parseInt(blueInput.value);
+    // alphaShift = parseFloat(alphaInput.value);
 
-    smearWidth = Math.min(100,Math.max(0,Number(smearWidthInput.value)));
-    chosenPixel = Math.min(100,Math.max(0,Number(chosenPixelInput.value)));
-    noiseProbability = Math.min(100,Math.max(0,Number(noiseProbabilityInput.value)));
-    noiseColorRange = Math.min(100,Math.max(0,Number(noiseColorRangeInput.value)));
-    dotSizeFactor = Math.min(100,Math.max(0,Number(dotSizeFactorInput.value)));
+    //smearWidth = Math.min(100,Math.max(0,Number(smearWidthInput.value)));
+    //chosenPixel = Math.min(100,Math.max(0,Number(chosenPixelInput.value)));
+    //noiseProbability = Math.min(100,Math.max(0,Number(noiseProbabilityInput.value)));
+    //noiseColorRange = Math.min(100,Math.max(0,Number(noiseColorRangeInput.value)));
+    //dotSizeFactor = Math.min(100,Math.max(0,Number(dotSizeFactorInput.value)));
 
-    rgbColorRange = noiseColorRange/100 * 255;
+    //rgbColorRange = noiseColorRange/100 * 255;
 
     if(visualizationChoice == "sketch"){
         backgroundColor = "#FFFFFF";
@@ -173,6 +159,7 @@ function getUserInputs() {
 }
 
 function toggleInputMenu(){
+    console.log("toggleInputMenu()")
 
     var numColumns = 9;
 
@@ -191,151 +178,194 @@ function toggleInputMenu(){
 
     var styleIndex = menuControlFlags.findIndex(obj => obj.name == visualizationChoice);
 
-    for(var idx=0; idx<numColumns; idx++){
-        var className = ".inputCol"+(idx+1);
+    for (var idx = 0; idx < numColumns; idx++){
+        var className = ".inputCol" + (idx + 1);
         var elements = document.querySelectorAll(className);
         elements.forEach(element => {
-            if(menuControlFlags[styleIndex].menuOptions[idx] == 1){
+            if (menuControlFlags[styleIndex].menuOptions[idx] == 1){
                 element.classList.remove('hidden');
             } else {
                 element.classList.add('hidden');
             }
         });
     }
-    
 }
 
-function showDefaultImage() {
+// function showDefaultImage() {
     
-    var defaultImage = new Image();
-    defaultImage.src = 'images/HK2024.jpg';
+//     var defaultImage = new Image();
+//     defaultImage.src = 'images/HK2024.jpg';
 
-    defaultImage.onload = () => {
+//     defaultImage.onload = () => {
 
-        actualWidth = defaultImage.width;
-        actualHeight = defaultImage.height;
+//         actualWidth = defaultImage.width;
+//         actualHeight = defaultImage.height;
 
-        //adjust for max width
-        if(actualWidth >= maxImageWidth){
-        scaledWidth = maxImageWidth;
-        } else{
-        scaledWidth = Math.min(maxImageWidth,actualWidth*1.0);
-        }
+//         const scaled = imageScaler(defaultImage, 1)
 
-        widthScalingRatio = scaledWidth / actualWidth;
-        scaledHeight = actualHeight * widthScalingRatio;
+//         newCanvas = document.createElement('canvas');
+//         newCtx = newCanvas.getContext('2d');
 
-        //adjust for max height
-        if(scaledHeight > maxImageHeight){
-            scaledWidth = (maxImageHeight / scaledHeight) * scaledWidth;
-            widthScalingRatio = scaledWidth / actualWidth;
-            scaledHeight = actualHeight * widthScalingRatio;
-        }
+//         newCanvas.width = defaultImage.width; //actualWidth;
+//         newCanvas.height = defaultImage.height; //actualHeight;
 
-        newCanvas = document.createElement('canvas');
-        newCtx = newCanvas.getContext('2d');
+//         newCtx.drawImage(defaultImage, 0, 0);
 
-        newCanvas.width = actualWidth;
-        newCanvas.height = actualHeight;
+//         const newImageData = newCanvas.toDataURL();
+//         const newImage = new Image();
+//         newImage.src = newImageData;
+//         newImage.style.width = `${scaled.w}px`;
+//         document.getElementById('imageContainer').appendChild(newImage)
 
-        newCtx.drawImage(defaultImage, 0, 0);
+//         //imageContainer.appendChild(newImage);
 
-        const newImageData = newCanvas.toDataURL();
-        const newImage = new Image();
-        newImage.src = newImageData;
-        newImage.style.width = `${scaledWidth}px`;
-        imageContainer.appendChild(newImage);
+//         var img = document.getElementById('imageContainer').querySelector('img'); //imageContainer.querySelector('img');
 
-        var img = imageContainer.querySelector('img');
+//         img.onload = () => {
+//             const canvas = document.createElement('canvas');
+//             canvas.width = defaultImage.width;
+//             canvas.height = defaultImage.height;
+//             const ctx = canvas.getContext('2d');
+//             ctx.drawImage(img, 0, 0);
+//             pixels = ctx.getImageData(0, 0, defaultImage.width, defaultImage.height).data;
+//             isImageLoaded = true;
+//             drawNewImage();
 
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = actualWidth;
-            canvas.height = actualHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            pixelData = ctx.getImageData(0, 0, actualWidth, actualHeight);
-            pixels = pixelData.data;
+//             img.addEventListener('click', (e) => {
+//                 let clickPos = {x: e.offsetX / scaled.ratio, y: e.offsetY / scaled.ratio}; 
+//                 console.log(`Clicked at (${clickPos.x}, ${clickPos.y})`);
+//                 if(visualizationChoice=="grid"){
+//                     drawNewImage(pixels, clickPos);
+//                 }
+//             });
+
+//             window.scrollTo(0, 0);
+//         }
+
+//     }
+// }
+
+// ----------------------------------------------------------------------------------------
+// BELOW OF THE BEGINNINGS OF FUNCTIONS WHICH SEPERATE THE RESPONSIBILITIES FOR FILE READING
+// AND IMAGE PARSING... This way both the default image and user input images can be 
+// parsed by *one* function instead of two nearly identical functions.
+
+function getFile(file){
+    let reader = new FileReader();
+     reader.onload = (event) => {
+         parseImage(event.target.result);
+    };
+    reader.readAsDataURL(file);
+    isImageLoaded = true;
+}
+
+function parseImage(imageData, imagesOnscreen = 2, defaultImage = false){
+
+    //remove any existing images
+    let imageContainer = document.getElementById('imageContainer');
+    while (imageContainer.firstChild) {
+        imageContainer.removeChild(imageContainer.firstChild);
+    }
+
+    let newImageContainer = document.getElementById('newImageContainer');
+    while (newImageContainer.firstChild) {
+        newImageContainer.removeChild(newImageContainer.firstChild);
+    }
+
+    let image = new Image();
+    image.src = imageData
+
+    image.onload = () => {
+        
+        actualWidth = image.width;
+        actualHeight = image.height;
+            
+        const scaled = imageScaler(image, imagesOnscreen);
+
+        // Create
+        var originalImg = document.createElement('img');
+        originalImg.src = image.src; 
+        originalImg.width = scaled.w;
+        originalImg.height = scaled.h;
+        document.getElementById('imageContainer').appendChild(originalImg);
+
+        // Get the pixel colors
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = image.width; 
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+        pixels = ctx.getImageData(0, 0, image.width, image.height).data;
+        if (defaultImage == true){
             isImageLoaded = true;
             drawNewImage();
-
-            img.addEventListener('click', (e) => {
-                clickXPosition = e.offsetX / widthScalingRatio;
-                clickYPosition = e.offsetY / widthScalingRatio;
-                console.log(`Clicked at (${clickXPosition}, ${clickXPosition})`);
-                if(visualizationChoice=="grid"){
-                    drawNewImage();
-                }
-            });
-
-            window.scrollTo(0, 0);
         }
 
+        //add click position event listener
+        originalImg.addEventListener('click', (e) => {
+            let clickPos = {x: e.offsetX / scaled.ratio, y: e.offsetY / scaled.ratio};
+            console.log(`Clicked at (${clickPos.x}, ${clickPos.y})`);
+            if (visualizationChoice == "grid"){
+                drawNewImage(pixels, clickPos);
+            }
+        });
+
+        refresh();
     }
 }
+//--------------------------------------------------------------------------------------------
 
 function readSourceImage(){
 
-//remove any existing images
-while (imageContainer.firstChild) {
-    imageContainer.removeChild(imageContainer.firstChild);
-}
+    console.log("NOT BEING CALLED!")
 
-while (newImageContainer.firstChild) {
-    newImageContainer.removeChild(newImageContainer.firstChild);
-}
+
+    //remove any existing images
+    let imageContainer = document.getElementById('imageContainer');
+    while (imageContainer.firstChild) {
+        imageContainer.removeChild(imageContainer.firstChild);
+    }
+
+    let newImageContainer = document.getElementById('newImageContainer');
+    while (newImageContainer.firstChild) {
+        newImageContainer.removeChild(newImageContainer.firstChild);
+    }
 
 //read image file      
   var file = imageInput.files[0];
   var reader = new FileReader();
   reader.onload = (event) => {
-    var imageData = event.target.result;
+    // var imageData = event.target.result;
     var image = new Image();
-    image.src = imageData;
+    image.src = event.target.result; //imageData;
     image.onload = () => {
       
         actualWidth = image.width;
         actualHeight = image.height;
             
-        //adjust for max width
-        if(actualWidth >= maxImageWidth){
-            scaledWidth = maxImageWidth;
-        } else{
-            scaledWidth = Math.min(maxImageWidth,actualWidth*2);
-        }
+        const scaled = imageScaler(image, 2);
 
-        widthScalingRatio = scaledWidth / actualWidth;
-        scaledHeight = actualHeight * widthScalingRatio;
-
-        //adjust for max height
-        if(scaledHeight > maxImageHeight){
-            scaledWidth = (maxImageHeight / scaledHeight) * scaledWidth;
-            widthScalingRatio = scaledWidth / actualWidth;
-            scaledHeight = actualHeight * widthScalingRatio;
-        }
-
+        // Create
         var originalImg = document.createElement('img');
-        originalImg.src = imageData;
-        originalImg.width = scaledWidth;
-        originalImg.height = scaledHeight;
-        imageContainer.appendChild(originalImg);
+        originalImg.src = image.src; 
+        originalImg.width = scaled.w;
+        originalImg.height = scaled.h;
+        document.getElementById('imageContainer').appendChild(originalImg);
 
         // Get the pixel colors
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = actualWidth;
-        canvas.height = actualHeight;
+        canvas.width = image.width; 
+        canvas.height = image.height;
         ctx.drawImage(image, 0, 0);
-        pixelData = ctx.getImageData(0, 0, actualWidth, actualHeight);
-        pixels = pixelData.data;
+        pixels = ctx.getImageData(0, 0, image.width, image.height).data;
 
         //add click position event listener
         originalImg.addEventListener('click', (e) => {
-            clickXPosition = e.offsetX / widthScalingRatio;
-            clickYPosition = e.offsetY / widthScalingRatio;
-            console.log(`Clicked at (${clickXPosition}, ${clickXPosition})`);
-            if(visualizationChoice=="grid"){
-                drawNewImage();
+            let clickPos = {x: e.offsetX / scaled.ratio, y: e.offsetY / scaled.ratio};
+            console.log(`Clicked at (${clickPos.x}, ${clickPos.y})`);
+            if (visualizationChoice == "grid"){
+                drawNewImage(pixels, clickPos);
             }
         });
 
@@ -349,6 +379,29 @@ while (newImageContainer.firstChild) {
 
 }
 
+function imageScaler(source, wMultiplier){
+
+    let max = {
+        w: (window.innerWidth * WINDOWREDUCTIONS.w) / 2,
+        h: window.innerHeight * WINDOWREDUCTIONS.h
+    }
+
+    let width, height, ratio;
+
+    width = (source.width >= max.w) ? max.w : Math.min(max.w, source.width * wMultiplier)
+    ratio = width / source.width;
+    height = source.height * ratio;
+
+    if (height > max.h){
+        width = (max.h / height) * width;
+        ratio = width / source.width;
+        height = source.height * ratio;
+    }
+
+    return {w: width, h: height, ratio: ratio}
+
+}
+
 function refresh(){
 
     console.log("refresh");
@@ -359,7 +412,6 @@ function refresh(){
 
     getUserInputs();
     setTimeout(drawNewImage,5);
-
 }
 
 //shortcut key presses
@@ -372,7 +424,11 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-function drawNewImage(){
+function drawNewImage(pixels, clickPos){
+
+    console.log("drawNewImage()");
+
+    console.log(pixels)
 
     if (!isImageLoaded) {
         //hide the loading screen
@@ -381,7 +437,7 @@ function drawNewImage(){
         return; // exit the function if isImageLoaded is false
     }
 
-    originalImage = imageContainer.querySelector('img');
+    let originalImage = document.getElementById('imageContainer').querySelector('img');
 
     // Create a new image
     newCanvas = document.createElement('canvas');
@@ -392,561 +448,710 @@ function drawNewImage(){
 
     //set background color of new canvas
     newCtx.fillStyle = backgroundColor;
-    newCtx.fillRect(0, 0, actualWidth, actualHeight);
+    newCtx.fillRect(0, 0, originalImage.width, originalImage.height); //actualWidth, actualHeight);
 
-    console.log("actual width: "+actualWidth);
-    console.log("actual height: "+actualHeight);
+    console.log("actual width: " + originalImage.width); //+actualWidth);
+    console.log("actual height: " + originalImage.height); // +actualHeight);
 
     //remove any existing new images
+    let newImageContainer = document.getElementById('newImageContainer')
     while (newImageContainer.firstChild) {
         newImageContainer.removeChild(newImageContainer.firstChild);
     }
 
-    if(visualizationChoice == "rgba"){
-        console.log("running rgba visual");
-        for (let j = 0; j < pixels.length; j += 4) {
-            const newRed = pixels[j] * (redShift/100);
-            const newGreen = pixels[j + 1] * (greenShift/100);
-            const newBlue = pixels[j + 2] * (blueShift/100);
-            const newAlpha = pixels[j + 3] * (alphaShift/100);
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-    } else if(visualizationChoice == "smear"){
-        console.log("running smear visual");
-        for (let j = 0; j < pixels.length; j += 4) {
-            var currentColNum = j / 4 % actualWidth;
-            var currentRowNum = Math.floor(j / 4 / actualWidth);
-            var currentRightPixel = (Math.floor(actualWidth * chosenPixel/100) + (actualWidth*currentRowNum))-1;
+    // Calling the input functions as arguments not only adds the required event
+    // listeners only when *needed* but also returns the required input value
+    // which is passed into the calling function... two birds, one stone.
 
-            var newRed = pixels[currentRightPixel*4];
-            var newGreen = pixels[currentRightPixel*4+1];
-            var newBlue = pixels[currentRightPixel*4+2];
-            var newAlpha = 1;
-            if(currentColNum < (actualWidth * smearWidth/100)){
-                newAlpha = pixels[currentRightPixel*4+3];
-            } else {
-                newAlpha = 0;
-            }
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-    } else if(visualizationChoice == "roller"){
-        console.log("running roller visual");
-
-        //faithful reproduction
-        newCtx.drawImage(originalImage, 0, 0);
-
-        //smear effect
-        var numSmears = 4;
-
-        for(var smearCounter=0; smearCounter<numSmears; smearCounter++){
-            
-            var smearOrder = Math.random() //choose to start with top, right, bottom, or left
-
-            if(smearOrder <= 0.25){
-                topSmear();
-                rightSmear();
-                bottomSmear();
-                leftSmear();
-            } else if(smearOrder <= 0.5){
-                rightSmear();
-                bottomSmear();
-                leftSmear(); 
-                topSmear();                   
-            } else if(smearOrder <= 0.5){
-                bottomSmear();
-                leftSmear(); 
-                topSmear();   
-                rightSmear();                
-            } else {
-                leftSmear(); 
-                topSmear();    
-                rightSmear();
-                bottomSmear();               
-            }
-
-        }
-
-    } else if(visualizationChoice == "noise"){
-        console.log("running noise visual");
-
-        for (let j = 0; j < pixels.length; j += 4) {
-            var actualRed = pixels[j];
-            var actualGreen = pixels[j + 1];
-            var actualBlue = pixels[j + 2] ;
-            var actualAlpha = pixels[j + 3];
-
-            var randomRed = chosenColorR - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomGreen = chosenColorG - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomBlue = chosenColorB - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomAlpha = 1;
-
-            if(Math.random() <= noiseProbability/100){
-                newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
-            } else {
-                newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${actualAlpha})`;
-            }
-
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-
-    } else if(visualizationChoice == "perlin"){
-        console.log("running perlin visual");
-
-        generatePerlinNoise();
-
-        for (let j = 0; j < pixels.length; j += 4) {
-
-            var pixelX = j / 4 % actualWidth;
-            var pixelY = Math.floor(j / 4 / actualWidth);
-
-            var perlinXGridSize = actualWidth / dataWidth;
-            var perlinYGridSize = actualHeight / dataHeight;
-
-            var perlinX = Math.floor(pixelX / perlinXGridSize);
-            var perlinY = Math.floor(pixelY / perlinYGridSize);
-
-            var perlinDataValue = perlinDataArray[perlinY][perlinX];
-
-            var red = pixels[j];
-            var green = pixels[j + 1];
-            var blue = pixels[j + 2];
-            var alpha = pixels[j + 3];
-
-            newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-
-            //var newRed = chosenColorR * perlinDataValue/(noiseProbability/100);
-            var newRed = chosenColorR - (255 * (perlinDataValue-0.2));
-            var newGreen = chosenColorG  - (255 * (perlinDataValue-0.2));
-            var newBlue = chosenColorB;
-            var newAlpha = Math.min(0.92, (1 - (perlinDataValue/(noiseProbability/100))) * 5 - 0.4);
-
-            if(perlinDataValue > noiseProbability/100){
-                //newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-            } else {
-                newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            }
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-
-    } else if(visualizationChoice == "perlin2"){
-        console.log("running perlin2 visual");
-        generatePerlinNoise();
-
-        for (let j = 0; j < pixels.length; j += 4) {
-
-            var pixelX = j / 4 % actualWidth;
-            var pixelY = Math.floor(j / 4 / actualWidth);
-
-            var perlinXGridSize = actualWidth / dataWidth;
-            var perlinYGridSize = actualHeight / dataHeight;
-
-            var perlinX = Math.floor(pixelX / perlinXGridSize);
-            var perlinY = Math.floor(pixelY / perlinYGridSize);
-
-            var perlinDataValue = perlinDataArray[perlinY][perlinX];
-
-            var red = pixels[j];
-            var green = pixels[j + 1];
-            var blue = pixels[j + 2];
-            var alpha = pixels[j + 3];
-
-            var randomRed = chosenColorR - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomGreen = chosenColorG - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomBlue = chosenColorB - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomAlpha = 1;
-
-            if((Math.pow(perlinDataValue,2.5) * Math.random()) < ((noiseProbability/100) * 0.025) || ((((100 - noiseProbability)/100) * Math.random() * Math.pow(perlinDataValue,2)) < 0.005)){
-                newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
-
-            } else {
-                newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-            }
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-
-    } else if(visualizationChoice == "perlin3"){
-        console.log("running perlin3 visual");
-
-        var maxPixelSize = 15;
+    switch (visualizationChoice){
+        case "rgba":
+            effectRGBA(getRGBAInput());
+            break;
         
-        generatePerlinNoise();
-
-        for (let j = pixels.length-4; j >= 0; j -= 4) {
-
-            var pixelSize = Math.max(1, Math.round(Math.random() * maxPixelSize * (noiseProbability/100)));
-
-            var pixelX = j / 4 % actualWidth;
-            var pixelY = Math.floor(j / 4 / actualWidth);
-
-            var perlinXGridSize = actualWidth / dataWidth;
-            var perlinYGridSize = actualHeight / dataHeight;
-
-            var perlinX = Math.floor(pixelX / perlinXGridSize);
-            var perlinY = Math.floor(pixelY / perlinYGridSize);
-
-            var perlinDataValue = perlinDataArray[perlinY][perlinX];
-
-            var red = pixels[j];
-            var green = pixels[j + 1];
-            var blue = pixels[j + 2];
-            var alpha = pixels[j + 3];
-
-            var randomRed = chosenColorR - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomGreen = chosenColorG - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomBlue = chosenColorB - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var randomAlpha = 1;
-
-            if((Math.pow(perlinDataValue,1.6) * Math.random()) < ((noiseProbability/100) * 0.010) || ((((100 - noiseProbability)/100) * Math.random() * Math.pow(perlinDataValue,2)) < 0.0001)){
-                newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
-
-            } else {
-                //pixelSize = 1;
-                newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-            }
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), pixelSize, pixelSize);
-        }
-
-    } else if(visualizationChoice == "pixelPop"){
-        console.log("running pixelPop visual");
-
-        var numChangePixels = 300;
-        var maxWidth = 500;
-        var maxHeight = 500;
-        var backgroundAlphaValue = 0.8;
-        var foregroundAlphaValue = 0.5;
-
-
-        for(i=0; i<numChangePixels; i++){
-            var currentPixelX = Math.round(Math.random() * actualWidth);
-            var currentPixelY = Math.round(Math.random() * actualHeight);
-            var pixelDataValue = (currentPixelY*actualWidth + currentPixelX) * 4;
-
-            var actualRed = pixels[pixelDataValue];
-            var actualGreen = pixels[pixelDataValue + 1];
-            var actualBlue = pixels[pixelDataValue + 2];
-
-            var pixelSize = Math.random() * maxWidth;
-            newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${backgroundAlphaValue})`;
-            newCtx.fillRect(currentPixelX, currentPixelY, pixelSize, pixelSize);
-
-        }
-
-        for (let j = 0; j < pixels.length; j += 4) {
-            
-            //Re-produce full picture
-            var actualRed = pixels[j];
-            var actualGreen = pixels[j + 1];
-            var actualBlue = pixels[j + 2];
-
-            newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${foregroundAlphaValue})`;
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-
-    } else if(visualizationChoice == "pointillist"){
-        console.log("running pointillist visual");
-
-        var minPointRadius = 1;
-        var maxPointRadius = Math.round(actualWidth/120) * (dotSizeFactor/100 + 0.5);
-        var pointRadiusRange = maxPointRadius - minPointRadius;
+        case "smear":
+            effectSmear(inputChosenPixel());
+            break;
         
-        var minPixelStep = 1;
-        var maxPixelStep = 5;
-        var pixelStepRange = maxPixelStep - minPixelStep;
-
-        var numPoints = 300000;
-
-        for (let j = 0; j < numPoints; j++) {
-            
-            var currentPixel = Math.round( (Math.random() * (pixels.length/4)) );
-            //var currentPixel = j;
-
-            var red = pixels[currentPixel*4] - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var green = pixels[currentPixel*4 + 1] - rgbColorRange/2 + (Math.random() * rgbColorRange);
-            var blue = pixels[currentPixel*4 + 2];
-            var alpha = 1.0;
-
-            var startAngle = Math.random() * (2 * Math.PI);
-            var endAngle = Math.random() * (2 * Math.PI);
-            var currentPointRadius = minPointRadius + Math.random() * pointRadiusRange;
-
-            newCtx.beginPath();
-            newCtx.arc(currentPixel % actualWidth, Math.floor(currentPixel / actualWidth), currentPointRadius, startAngle, endAngle);
-            newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-            newCtx.fill();
-        }
-
-    } else if(visualizationChoice == "sketch"){
-        console.log("running sketch visual");
-
-        for (let j = pixels.length-4; j > 0; j -= 4) {
-            
-            var currentRed = pixels[j];
-            var currentGreen = pixels[j + 1];
-            var currentBlue = pixels[j + 2];
-
-            var previousRed = pixels[j-4];
-            var previousGreen = pixels[j-4+1];
-            var previousBlue = pixels[j-4+2];
-
-            var redDelta = Math.abs(currentRed - previousRed);
-            var greenDelta = Math.abs(currentGreen - previousGreen);
-            var blueDelta = Math.abs(currentBlue - previousBlue);
-
-            var pixelColor = Math.max(0,255-(redDelta + greenDelta + blueDelta)*3);
-            var alpha = Math.pow(Math.min(1,Math.max(0,(redDelta + greenDelta + blueDelta)/100)), 4);
-
-            var primaryThreshold = 14 * (Math.pow((noiseProbability/100 + 0.5),5));
-
-            var pixelWidth = Math.round(Math.random()*actualWidth*0.006);
-            var pixelHeight = Math.round(Math.random()*5);
-
-            if(redDelta > primaryThreshold || greenDelta > primaryThreshold || blueDelta > primaryThreshold){
-                //newCtx.fillStyle = `rgba(${pixelColor}, ${pixelColor}, ${pixelColor}, ${alpha})`; //this will do black&white
-                newCtx.fillStyle = `rgba(${currentRed}, ${currentGreen}, ${currentBlue}, ${alpha})`; //colour sketch
-                newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), pixelWidth, pixelHeight);
-
-            } else {
-                //newCtx.fillStyle = "white";
-                //newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-            }
-
-        }
-
-    } else if(visualizationChoice == "palletize"){
-        console.log("running palletize visual");
-        console.log("Color Palette: "+paletteChoice);
-
-        for (let j = 0; j < pixels.length; j += 4) {
-            
-            var red = pixels[j];
-            var green = pixels[j + 1];
-            var blue = pixels[j + 2];
-
-            var lowestDistance = 0;
-            var targetR;
-            var targetG;
-            var targetB;
-            var alpha = 1;
-
-            for(i=0; i<chosenPaletteRGBValues.length; i++){
-
-                var currentDistance = Math.sqrt(
-                    (red - chosenPaletteRGBValues[i][0]) ** 2 +
-                    (green - chosenPaletteRGBValues[i][1]) ** 2 +
-                    (blue - chosenPaletteRGBValues[i][2]) ** 2
-                );
-
-                if(i==0 || currentDistance < lowestDistance){
-                    lowestDistance = currentDistance;
-                    targetR = chosenPaletteRGBValues[i][0];
-                    targetG = chosenPaletteRGBValues[i][1];
-                    targetB = chosenPaletteRGBValues[i][2];
-                }
-            }
-
-            newCtx.fillStyle = `rgba(${targetR}, ${targetG}, ${targetB}, ${alpha})`; //colour sketch
-            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
-        }
-
-    } else if(visualizationChoice == "pixel"){
-        console.log("running pixel visual");
-
-        var newPixelSize = Math.floor(Math.max(1,noiseProbability)); //width and height of new pixel square
-        var numRows = actualHeight / newPixelSize;
-        var numCols = actualWidth / newPixelSize;
-
-        var alpha = 1;
-
-        for(var cellY=0; cellY < Math.ceil(numRows); cellY++ ){
-            for(var cellX=0; cellX < Math.ceil(numCols); cellX++ ){
-
-                var cellPixels = [];
-
-                for(var pixelY=0; pixelY<newPixelSize; pixelY++){
-                    
-                    for(var pixelX=0; pixelX<newPixelSize; pixelX++){
-
-                        var currentXPosition = cellX*newPixelSize + pixelX;
-                        var currentYPosition = cellY*newPixelSize + pixelY;
-
-                        var currentPixelDataValue = (currentYPosition * actualWidth + currentXPosition) * 4;
-
-                        if(currentXPosition < actualWidth && currentYPosition < actualHeight){
-                            cellPixels.push(pixels[currentPixelDataValue]);
-                            cellPixels.push(pixels[currentPixelDataValue + 1]);
-                            cellPixels.push(pixels[currentPixelDataValue + 2]);
-                            cellPixels.push(pixels[currentPixelDataValue + 3]);
-                        }
-
-                    }
-                }
-
-                var avgColor = getAverageColor(cellPixels);
-                newCtx.fillStyle = `rgba(${avgColor[0]}, ${avgColor[1]}, ${avgColor[2]}, ${alpha})`;
-                newCtx.fillRect(cellX*newPixelSize, cellY*newPixelSize, newPixelSize, newPixelSize);
-
-            }
-
-        }
-
-    } else if(visualizationChoice == "clippings"){
-        console.log("running clippings visual");
-
-        var minClips = 4;
-        var maxClips = 25;
-        var clipsRange = maxClips - minClips;
-        var numClips = Math.ceil(minClips + (noiseProbability/100)*clipsRange);
-        var alpha = 1;
-
-        for(var windowCounter=0; windowCounter < numClips; windowCounter++){
-            var startX = Math.floor(Math.random() * actualWidth);
-            var startY = Math.floor(Math.random() * actualHeight);
-            var windowWidth = Math.floor(Math.random() * actualWidth*0.5);
-            var windowHeight = Math.floor(Math.random() * actualHeight*0.5);
-            var numPixels = windowWidth * windowHeight;
-
-            for(var row=0; row<windowHeight; row++){
-                for(var col=0; col<windowWidth; col++){
-                    var currentXPosition = startX + col;
-                    var currentYPosition = startY + row;
-                    var currentPixelDataValue = (currentYPosition*actualWidth + currentXPosition) * 4;
-
-                    var red = pixels[currentPixelDataValue];
-                    var green = pixels[currentPixelDataValue+1];
-                    var blue = pixels[currentPixelDataValue+2];
-                    
-                    newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-                    newCtx.fillRect(currentXPosition, currentYPosition, 1, 1);
-                }
-
-            }
-
-        }
-
-    } else if(visualizationChoice == "grid"){
-        console.log("run grid visual");
-        if(gridLoadCounter == 0){
-            // show the popup
-            popup.style.display = 'block';
-        }
-        gridLoadCounter++;
-
-        //faithful reproduction
-        newCtx.drawImage(originalImage, 0, 0);
-
-        var numHorizontalLines = 6 * ((noiseProbability/100)+0.5);
-        var startingHeight = clickYPosition;
-        var endingHeight = actualHeight;
-        var heightRange = endingHeight - startingHeight;
-        var strokeWidth = actualWidth / 100 / 2;
-        var strokeColor = "#D336BE";
-        var strokeColor2 = "#05C3DD";
-        var alpha = 0.8;
-
-        var numAngleLines = 8 * ((noiseProbability/100)+0.5);
-        var xSpacing = actualWidth / (numAngleLines+1)
-
-        for(var i=0; i<numAngleLines; i++){
-
-            var startingXPosition = (i+1) * xSpacing;
-            //var distanceFromCenter = (startingXPosition - actualWidth/2) / (actualWidth/2);
-            var slope = (startingXPosition - clickXPosition) / clickXPosition;
-            var lineYShift = heightRange;
-            var lineXShift = lineYShift * slope;
-
-            //draw vertical lines
-            newCtx.beginPath();
-            newCtx.moveTo(startingXPosition, startingHeight); // starting point
-            newCtx.lineTo(startingXPosition, 0); // ending point
-            newCtx.strokeStyle = strokeColor2;
-            newCtx.lineWidth = strokeWidth;
-            newCtx.globalAlpha = alpha/2;
-            newCtx.stroke();
-
-            //draw angle lines
-            newCtx.beginPath();
-            newCtx.moveTo(startingXPosition, startingHeight); // starting point
-            newCtx.lineTo(startingXPosition+lineXShift, endingHeight); // ending point
-            newCtx.strokeStyle = strokeColor;
-            newCtx.lineWidth = strokeWidth;
-            newCtx.globalAlpha = alpha;
-            newCtx.stroke();
-
-        }
-
-        //draw top horizontal lines
-        var numTopHorizontalLines = 6 * ((noiseProbability/100)+0.5);
-        var topSpacing = startingHeight / numTopHorizontalLines;
-
-        for(var i=0; i<numTopHorizontalLines; i++){
-            newCtx.beginPath();
-            newCtx.moveTo(0, i*topSpacing); // starting point
-            newCtx.lineTo(actualWidth, i*topSpacing); // ending point
-            newCtx.strokeStyle = strokeColor2;
-            newCtx.lineWidth = strokeWidth;
-            newCtx.globalAlpha = alpha/2;
-            newCtx.stroke();
-        }
-
-        //draw horizontal lines
-        for(var i=0; i<numHorizontalLines; i++){
-            
-            var currentHeight = startingHeight + heightRange * Math.pow(i/(numHorizontalLines-1),1.5);
-            newCtx.beginPath();
-            newCtx.moveTo(0, currentHeight); // starting point
-            newCtx.lineTo(actualWidth, currentHeight); // ending point
-            newCtx.strokeStyle = strokeColor;
-            if(i==0){
-                newCtx.lineWidth = strokeWidth*2;
-            } else{
-                newCtx.lineWidth = strokeWidth;
-            }
-            newCtx.globalAlpha = alpha;
-            newCtx.stroke();
-        }            
-
-    } else if(visualizationChoice == "mondrian"){
+        case "roller":
+            effectRoller(originalImage);
+            break;
         
-
-        //draw Mondrian grid
-        newCtx.beginPath();
-        newCtx.lineWidth = 0;
-
-        var xPad = Math.floor(actualWidth * 0.1);
-        var yPad = Math.floor(actualHeight * 0.1);
-
-        var initialRect = new Rectangle(new Point(0, 0), new Point(actualWidth, actualHeight));
-        initialRect.split(xPad, yPad, 0, 4, newCtx);
-
-        newCtx.stroke();
-
-        //faithful reproduction
-        newCtx.globalAlpha = Math.min(1,Math.max(0,1-(noiseProbability/100)));
-        newCtx.drawImage(originalImage, 0, 0);
-
+        case "noise":
+            effectNoise();
+            break;
+        
+        case "perlin":
+            effectPerlin(inputNoiseProbability());
+            break;
+        
+        case "perlin2":
+            effectPerlin2(inputNoiseProbability());
+            break;
+        
+        case "perlin3":
+            effectPerlin3(inputNoiseProbability());
+            break;
+        
+        case "pixelPop":
+            effectPixelPop();
+            break;
+        
+        case "pointillist":
+            effectPointillist(inputDotSizeFactor());
+            break;
+        
+        case "sketch":
+            effectSketch(inputNoiseProbability());
+            break;
+        
+        case "palletize":
+            effectPalettize();
+            break;
+        
+        case "pixel":
+            effectPixel(inputNoiseProbability());
+            break;
+        
+        case "clippings":
+            effectClippings(inputNoiseProbability());
+            break;
+        
+        case "grid":
+            effectGrid(
+                imageContainer.querySelector('img'),
+                clickPos,
+                inputNoiseProbability()
+            );
+            break;
+        
+        case "mondrian":
+            effectMondrian(originalImage, inputNoiseProbability());
+            break;
     }
 
     const newImageData = newCanvas.toDataURL();
     const newImage = new Image();
     newImage.src = newImageData;
-    newImage.style.width = `${scaledWidth}px`;
+    newImage.style.width = `${imageScaler(originalImage, 2).w}px`;
     newImageContainer.appendChild(newImage);
 
-    resizeTable();
+    resizeTable(originalImage);
 
     //hide the loading screen
     loadingScreen.classList.remove("lockOn");
     loadingScreen.classList.add("hidden");
+}
 
+function effectRGBA(rgbaInput){
+    console.log("running rgba visual");
+
+    // Is this even needed?! 
+    var rgbaShift = {
+        r: rgbaInput.r,
+        g: rgbaInput.g,
+        b: rgbaInput.b,
+        a: rgbaInput.a
+    }
+
+    for (let j = 0; j < pixels.length; j += 4) {
+        
+        let pixel = {
+            r: pixels[j] * (rgbaShift.r / 100),
+            g: pixels[j + 1] * (rgbaShift.g / 100),
+            b: pixels[j + 2] * (rgbaShift.g / 100),
+            a: pixels[j + 3] * (rgbaShift.g / 100)
+        }
+
+        newCtx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})`;
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectSmear(chosenPixel){
+    console.log("running smear visual");
+    for (let j = 0; j < pixels.length; j += 4) {
+        var currentColNum = j / 4 % actualWidth;
+        var currentRowNum = Math.floor(j / 4 / actualWidth);
+        var currentRightPixel = (Math.floor(actualWidth * chosenPixel/100) + (actualWidth*currentRowNum))-1;
+
+        var newRed = pixels[currentRightPixel*4];
+        var newGreen = pixels[currentRightPixel*4+1];
+        var newBlue = pixels[currentRightPixel*4+2];
+        var newAlpha = 1;
+        if(currentColNum < (actualWidth * smearWidth/100)){
+            newAlpha = pixels[currentRightPixel*4+3];
+        } else {
+            newAlpha = 0;
+        }
+        newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectRoller(imageSource, smears = 4){
+    console.log("running roller visual");
+
+    //faithful reproduction
+    newCtx.drawImage(imageSource, 0, 0);
+
+    for (let smearCount = 0; smearCount < smears; smearCount++){
+        
+        let start = Math.random(); //choose to start with top, right, bottom, or left
+        let order = [];
+        
+        // 1 = Left, 2 = Right, 3 = Top, 4 = Bottom
+        if (start <= 0.25){
+            order = [3, 2, 4, 1];
+        } else if (start <= 0.5){
+            order = [2, 4, 1, 3]
+        } else if (start <= 0.5){
+            order = [4, 1, 3, 2];          
+        } else {
+            order = [1, 3, 2, 4];          
+        }
+
+        for (let idx = 0; idx < order.length; idx++){
+            roll(order[idx])
+        }
+    }
+}
+
+function roll(direction = 1){
+    console.log("roll(" + direction + ")");
+
+    let smearStartingX = Math.round(Math.random() * actualWidth);
+    let smearStartingY = Math.round(Math.random() * actualHeight);
+
+    switch (direction){
+        case 1: // Left 
+            smearStartingX = 0;
+            break;
+        case 2: // Right 
+            smearStartingX = actualWidth - 1;
+            break;
+        case 3: // Top 
+            smearStartingY = 0;
+            break;
+        case 4: // Bottom 
+            smearStartingY = actualHeight -1;
+            break;
+    };
+
+    var smearWidth = rollLength(actualWidth);
+    var smearHeight = rollLength(actualHeight);
+
+    var pixelSize = Math.ceil(Math.max(actualWidth, actualHeight) / 500);
+
+    for (let i = 0; i < smearWidth; i += pixelSize){
+
+        let idx = ((smearStartingX + i) + (smearStartingY * actualWidth)) * 4;
+
+        let newRed = pixels[idx];
+        let newGreen = pixels[idx + 1];
+        let newBlue = pixels[idx + 2];
+
+        for (let j = 0; j < smearHeight; j += pixelSize){
+
+            let newAlpha = 1 - (j / smearHeight);
+
+            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
+
+            let x = smearStartingX + i;
+            let y = smearStartingY + i;
+
+            switch (direction){
+                case 1: // Left
+                    x = smearStartingX + j;
+                    break;
+                case 2: // Right
+                    x = smearStartingX - j;
+                    break;
+                case 3: // Top
+                    y = smearStartingY + j;
+                    break;
+                case 4: // Bottom
+                    y = smearStartingY - j;
+                    break;
+            };
+
+            newCtx.fillRect(x, y, pixelSize, pixelSize);
+        }
+    }
+}
+
+function rollLength(dimension){
+    return Math.round(Math.random() * dimension * (inputNoiseProbability() / 100))
+}
+
+function effectNoise(){
+    console.log("running noise visual");
+
+    for (let j = 0; j < pixels.length; j += 4) {
+        var actualRed = pixels[j];
+        var actualGreen = pixels[j + 1];
+        var actualBlue = pixels[j + 2] ;
+        var actualAlpha = pixels[j + 3];
+
+        var randomRed = chosenColorR - rgbColorRange() /2 + (Math.random() * rgbColorRange());
+        var randomGreen = chosenColorG - rgbColorRange() /2 + (Math.random() * rgbColorRange());
+        var randomBlue = chosenColorB - rgbColorRange () /2 + (Math.random() * rgbColorRange());
+        var randomAlpha = 1;
+
+        if(Math.random() <= noiseProbability/100){
+            newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
+        } else {
+            newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${actualAlpha})`;
+        }
+
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectPerlin(noiseProbability){
+    console.log("running perlin visual");
+
+    let perlinNoise = generatePerlinNoise();
+
+    let gridSize = perlinGridSize();
+
+    for (let j = 0; j < pixels.length; j += 4) {
+
+        let pixel = getPixel(pixels, j, gridSize, perlinNoise);
+
+        newCtx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})`;
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+
+        //var newRed = chosenColorR * perlinDataValue/(noiseProbability/100);
+        var newRed = chosenColorR - (255 * (pixel.perlin - 0.2));
+        var newGreen = chosenColorG  - (255 * (pixel.perlin - 0.2));
+        var newBlue = chosenColorB;
+        var newAlpha = Math.min(0.92, (1 - (pixel.perlin / (noiseProbability / 100))) * 5 - 0.4);
+
+        if (pixel.perlin > noiseProbability / 100){
+            //newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+        } else {
+            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
+        }
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectPerlin2(noiseProbability){
+    console.log("running perlin2 visual");
+    
+    let perlinNoise = generatePerlinNoise();
+
+    let gridSize = perlinGridSize();
+
+    for (let j = 0; j < pixels.length; j += 4) {
+
+        let pixel = getPixel(pixels, j, gridSize, perlinNoise);
+
+        var randomRed = chosenColorR - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomGreen = chosenColorG - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomBlue = chosenColorB - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomAlpha = 1;
+
+        if((Math.pow(pixel.perlin, 2.5) * Math.random()) < ((noiseProbability / 100) * 0.025) || ((((100 - noiseProbability)/100) * Math.random() * Math.pow(perlinDataValue,2)) < 0.005)){
+            newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
+
+        } else {
+            newCtx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})`;
+        }
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectPerlin3(noiseProbability){
+    console.log("running perlin3 visual");
+
+    var maxPixelSize = 15;
+    
+    let perlinNoise = generatePerlinNoise();
+
+    let gridSize = perlinGridSize();
+
+    for (let j = pixels.length-4; j >= 0; j -= 4) {
+
+        var pixelSize = Math.max(1, Math.round(Math.random() * maxPixelSize * (noiseProbability / 100)));
+
+        let pixel = getPixel(pixels, j, gridSize, perlinNoise);
+
+        var randomRed = chosenColorR - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomGreen = chosenColorG - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomBlue = chosenColorB - rgbColorRange() / 2 + (Math.random() * rgbColorRange());
+        var randomAlpha = 1;
+
+        if((Math.pow(pixel.perlin,1.6) * Math.random()) < ((noiseProbability/100) * 0.010) || ((((100 - noiseProbability)/100) * Math.random() * Math.pow(perlinDataValue,2)) < 0.0001)){
+            newCtx.fillStyle = `rgba(${randomRed}, ${randomGreen}, ${randomBlue}, ${randomAlpha})`;
+
+        } else {
+            //pixelSize = 1;
+            newCtx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})`;
+        }
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), pixelSize, pixelSize);
+    }
+}
+
+function getPixel(pixels, i, gridSize, perlinNoise){
+    var pixelX = i / 4 % actualWidth;
+    var pixelY = Math.floor(i / 4 / actualWidth);
+    var perlinX = Math.floor(pixelX / gridSize.x);
+    var perlinY = Math.floor(pixelY / gridSize.y);
+
+    return {r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3], perlin: perlinNoise[perlinY][perlinX]}
+}
+
+function perlinGridSize(){
+    return {x: actualWidth / dataWidth, y: actualHeight / dataHeight}
+}
+
+function effectPixelPop(){
+    console.log("running pixelPop visual");
+
+    var numChangePixels = 300;
+    var maxWidth = 500;
+    var maxHeight = 500;
+    var backgroundAlphaValue = 0.8;
+    var foregroundAlphaValue = 0.5;
+
+
+    for(i=0; i<numChangePixels; i++){
+        var currentPixelX = Math.round(Math.random() * actualWidth);
+        var currentPixelY = Math.round(Math.random() * actualHeight);
+        var pixelDataValue = (currentPixelY*actualWidth + currentPixelX) * 4;
+
+        var actualRed = pixels[pixelDataValue];
+        var actualGreen = pixels[pixelDataValue + 1];
+        var actualBlue = pixels[pixelDataValue + 2];
+
+        var pixelSize = Math.random() * maxWidth;
+        newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${backgroundAlphaValue})`;
+        newCtx.fillRect(currentPixelX, currentPixelY, pixelSize, pixelSize);
+
+    }
+
+    for (let j = 0; j < pixels.length; j += 4) {
+        
+        //Re-produce full picture
+        var actualRed = pixels[j];
+        var actualGreen = pixels[j + 1];
+        var actualBlue = pixels[j + 2];
+
+        newCtx.fillStyle = `rgba(${actualRed}, ${actualGreen}, ${actualBlue}, ${foregroundAlphaValue})`;
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectPointillist(dotSizeFactor, minPixelStep = 1, maxPixelStep = 5, numPoints = 300000){
+    console.log("running pointillist visual");
+
+    const minPointRadius = 1;
+    let maxPointRadius = Math.round(actualWidth / 120) * (dotSizeFactor / 100 + 0.5);
+    let pointRadiusRange = maxPointRadius - minPointRadius;
+    
+    // let pixelStepRange = maxPixelStep - minPixelStep;
+
+    for (let j = 0; j < numPoints; j++) {
+        
+        let currentPixel = Math.round( (Math.random() * (pixels.length / 4)) );
+
+        let pixel = {
+            r: pixels[currentPixel * 4] - rgbColorRange() / 2 + (Math.random() * rgbColorRange()),
+            g: pixels[currentPixel * 4 + 1] - rgbColorRange() / 2 + (Math.random() * rgbColorRange()),
+            b: pixels[currentPixel* 4 + 2],
+            a: 1.
+        }
+
+        newCtx.beginPath();
+        newCtx.arc(
+            currentPixel % actualWidth,
+            Math.floor(currentPixel / actualWidth),
+            minPointRadius + Math.random() * pointRadiusRange,
+            randomAngle(),
+            randomAngle()
+        );
+        newCtx.fillStyle = `rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})`;
+        newCtx.fill();
+    }
+}
+
+function randomAngle(){
+    return Math.random() * (2 * Math.PI)
+}
+
+function effectSketch(noiseProbability){
+    console.log("running sketch visual");
+
+    for (let j = pixels.length-4; j > 0; j -= 4) {
+        
+        var currentRed = pixels[j];
+        var currentGreen = pixels[j + 1];
+        var currentBlue = pixels[j + 2];
+
+        var previousRed = pixels[j-4];
+        var previousGreen = pixels[j-4+1];
+        var previousBlue = pixels[j-4+2];
+
+        var redDelta = Math.abs(currentRed - previousRed);
+        var greenDelta = Math.abs(currentGreen - previousGreen);
+        var blueDelta = Math.abs(currentBlue - previousBlue);
+
+        var pixelColor = Math.max(0,255-(redDelta + greenDelta + blueDelta)*3);
+        var alpha = Math.pow(Math.min(1,Math.max(0,(redDelta + greenDelta + blueDelta)/100)), 4);
+
+        var primaryThreshold = 14 * (Math.pow((noiseProbability/100 + 0.5),5));
+
+        var pixelWidth = Math.round(Math.random()*actualWidth*0.006);
+        var pixelHeight = Math.round(Math.random()*5);
+
+        if(redDelta > primaryThreshold || greenDelta > primaryThreshold || blueDelta > primaryThreshold){
+            //newCtx.fillStyle = `rgba(${pixelColor}, ${pixelColor}, ${pixelColor}, ${alpha})`; //this will do black&white
+            newCtx.fillStyle = `rgba(${currentRed}, ${currentGreen}, ${currentBlue}, ${alpha})`; //colour sketch
+            newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), pixelWidth, pixelHeight);
+
+        } else {
+            //newCtx.fillStyle = "white";
+            //newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+        }
+
+    }
+}
+
+function effectPalettize(){
+    console.log("running palletize visual");
+    console.log("Color Palette: " + paletteChoice);
+
+    for (let j = 0; j < pixels.length; j += 4) {
+        
+        var red = pixels[j];
+        var green = pixels[j + 1];
+        var blue = pixels[j + 2];
+
+        var lowestDistance = 0;
+        var targetR;
+        var targetG;
+        var targetB;
+        var alpha = 1;
+
+        for(i=0; i<chosenPaletteRGBValues.length; i++){
+
+            var currentDistance = Math.sqrt(
+                (red - chosenPaletteRGBValues[i][0]) ** 2 +
+                (green - chosenPaletteRGBValues[i][1]) ** 2 +
+                (blue - chosenPaletteRGBValues[i][2]) ** 2
+            );
+
+            if(i==0 || currentDistance < lowestDistance){
+                lowestDistance = currentDistance;
+                targetR = chosenPaletteRGBValues[i][0];
+                targetG = chosenPaletteRGBValues[i][1];
+                targetB = chosenPaletteRGBValues[i][2];
+            }
+        }
+
+        newCtx.fillStyle = `rgba(${targetR}, ${targetG}, ${targetB}, ${alpha})`; //colour sketch
+        newCtx.fillRect(j / 4 % actualWidth, Math.floor(j / 4 / actualWidth), 1, 1);
+    }
+}
+
+function effectPixel(noiseProbability){
+
+    console.log("running pixel visual");
+
+    var newPixelSize = Math.floor(Math.max(1, noiseProbability)); //width and height of new pixel square
+    var numRows = actualHeight / newPixelSize;
+    var numCols = actualWidth / newPixelSize;
+
+    var alpha = 1;
+
+    for(var cellY=0; cellY < Math.ceil(numRows); cellY++ ){
+        for(var cellX=0; cellX < Math.ceil(numCols); cellX++ ){
+
+            var cellPixels = [];
+
+            for(var pixelY=0; pixelY<newPixelSize; pixelY++){
+                
+                for(var pixelX=0; pixelX<newPixelSize; pixelX++){
+
+                    var currentXPosition = cellX*newPixelSize + pixelX;
+                    var currentYPosition = cellY*newPixelSize + pixelY;
+
+                    var currentPixelDataValue = (currentYPosition * actualWidth + currentXPosition) * 4;
+
+                    if(currentXPosition < actualWidth && currentYPosition < actualHeight){
+                        cellPixels.push(pixels[currentPixelDataValue]);
+                        cellPixels.push(pixels[currentPixelDataValue + 1]);
+                        cellPixels.push(pixels[currentPixelDataValue + 2]);
+                        cellPixels.push(pixels[currentPixelDataValue + 3]);
+                    }
+
+                }
+            }
+
+            var avgColor = getAverageColor(cellPixels);
+            newCtx.fillStyle = `rgba(${avgColor[0]}, ${avgColor[1]}, ${avgColor[2]}, ${alpha})`;
+            newCtx.fillRect(cellX*newPixelSize, cellY*newPixelSize, newPixelSize, newPixelSize);
+
+        }
+
+    }
+}
+
+function effectClippings(noiseProbability, minClips = 4, maxClips = 25, alpha = 1){
+    console.log("running clippings visual");
+
+    var clipsRange = maxClips - minClips;
+    var numClips = Math.ceil(minClips + (noiseProbability/100)*clipsRange);
+    
+    for (let windowCounter = 0; windowCounter < numClips; windowCounter++){
+        var startX = Math.floor(Math.random() * actualWidth);
+        var startY = Math.floor(Math.random() * actualHeight);
+        var windowWidth = Math.floor(Math.random() * actualWidth * 0.5);
+        var windowHeight = Math.floor(Math.random() * actualHeight * 0.5);
+        var numPixels = windowWidth * windowHeight;
+
+        for (let row = 0; row < windowHeight; row++){
+            for (let col = 0; col < windowWidth; col++){
+                var currentXPosition = startX + col;
+                var currentYPosition = startY + row;
+                var currentPixelDataValue = (currentYPosition * actualWidth + currentXPosition) * 4;
+
+                var red = pixels[currentPixelDataValue];
+                var green = pixels[currentPixelDataValue + 1];
+                var blue = pixels[currentPixelDataValue + 2];
+                
+                newCtx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+                newCtx.fillRect(currentXPosition, currentYPosition, 1, 1);
+            }
+
+        }
+
+    }
+}
+
+
+//Pop-up for grid visual style
+var popup = document.querySelector('.popup');
+popup.addEventListener('click', () => {
+    popup.style.display = 'none';
+});
+
+var gridLoadCounter = 0;
+
+function effectGrid(imageSource, clickPos = undefined, noiseProbability, strokeColor = "#D336BE", strokeColor2 = "#05C3DD"){
+ 
+    console.log("run grid visual");
+
+    if(gridLoadCounter == 0){
+        // show the popup
+        popup.style.display = 'block';
+    }
+    gridLoadCounter++;
+
+    //faithful reproduction
+    newCtx.drawImage(imageSource, 0, 0);
+
+    if (!clickPos){
+        clickPos = {x: actualWidth / 2, y: actualHeight / 2};
+    }    
+
+    if ('x' in clickPos){
+        console.log("clickPos has a mf x!");
+    }
+
+    var numHorizontalLines = 6 * ((noiseProbability / 100) + 0.5);
+    var startingHeight = clickPos.y; //clickYPosition;
+    var endingHeight = actualHeight;
+    var heightRange = endingHeight - startingHeight;
+    var strokeWidth = actualWidth / 100 / 2;
+    var alpha = 0.8;
+
+    var numAngleLines = 8 * ((noiseProbability/100)+0.5);
+    var xSpacing = actualWidth / (numAngleLines+1)
+
+    for(var i=0; i<numAngleLines; i++){
+
+        var startingXPosition = (i+1) * xSpacing;
+        //var distanceFromCenter = (startingXPosition - actualWidth/2) / (actualWidth/2);
+        var slope = (startingXPosition - clickPos.x) / clickPos.x;
+        var lineYShift = heightRange;
+        var lineXShift = lineYShift * slope;
+
+        //draw vertical lines
+        newCtx.beginPath();
+        newCtx.moveTo(startingXPosition, startingHeight); // starting point
+        newCtx.lineTo(startingXPosition, 0); // ending point
+        newCtx.strokeStyle = strokeColor2;
+        newCtx.lineWidth = strokeWidth;
+        newCtx.globalAlpha = alpha/2;
+        newCtx.stroke();
+
+        //draw angle lines
+        newCtx.beginPath();
+        newCtx.moveTo(startingXPosition, startingHeight); // starting point
+        newCtx.lineTo(startingXPosition+lineXShift, endingHeight); // ending point
+        newCtx.strokeStyle = strokeColor;
+        newCtx.lineWidth = strokeWidth;
+        newCtx.globalAlpha = alpha;
+        newCtx.stroke();
+
+    }
+
+    //draw top horizontal lines
+    var numTopHorizontalLines = 6 * ((noiseProbability/100)+0.5);
+    var topSpacing = startingHeight / numTopHorizontalLines;
+
+    for(var i=0; i<numTopHorizontalLines; i++){
+        newCtx.beginPath();
+        newCtx.moveTo(0, i*topSpacing); // starting point
+        newCtx.lineTo(actualWidth, i*topSpacing); // ending point
+        newCtx.strokeStyle = strokeColor2;
+        newCtx.lineWidth = strokeWidth;
+        newCtx.globalAlpha = alpha/2;
+        newCtx.stroke();
+    }
+
+    //draw horizontal lines
+    for(var i=0; i<numHorizontalLines; i++){
+        
+        var currentHeight = startingHeight + heightRange * Math.pow(i/(numHorizontalLines-1),1.5);
+        newCtx.beginPath();
+        newCtx.moveTo(0, currentHeight); // starting point
+        newCtx.lineTo(actualWidth, currentHeight); // ending point
+        newCtx.strokeStyle = strokeColor;
+        if(i==0){
+            newCtx.lineWidth = strokeWidth*2;
+        } else{
+            newCtx.lineWidth = strokeWidth;
+        }
+        newCtx.globalAlpha = alpha;
+        newCtx.stroke();
+    }            
+}
+
+function effectMondrian(originalImage, noiseProbability){
+    //draw Mondrian grid
+    newCtx.beginPath();
+    newCtx.lineWidth = 0;
+
+    var xPad = Math.floor(actualWidth * 0.1); //actualWidth * 0.1);
+    var yPad = Math.floor(actualHeight * 0.1); //actualHeight * 0.1);
+
+    var initialRect = new Rectangle(new Point(0, 0), new Point(actualWidth, actualHeight));
+    initialRect.split(xPad, yPad, 0, 4, newCtx);
+
+    newCtx.stroke();
+
+    //faithful reproduction
+    newCtx.globalAlpha = Math.min(1, Math.max(0,1 - (noiseProbability / 100)));
+    newCtx.drawImage(originalImage, 0, 0);
 }
 
 //Helper Functions
 
 function saveImage(){
-    const image = newImageContainer.querySelector('img');
+    const image = document.getElementById('newImageContainer').querySelector('img'); //newImageContainer.querySelector('img');
     const imageUrl = image.src;
     const link = document.createElement('a');
     const date = new Date();
@@ -962,7 +1167,6 @@ function saveImage(){
         link.download = filename;
         link.click();
         });
-
 }
 
 function extractRGB(rgbString) {
@@ -992,11 +1196,13 @@ function getAverageColor(chosenPixels) {
     return [r / count, g / count, b / count];
 }
 
-function resizeTable(){
+function resizeTable(source){
+
+    const scaled = imageScaler(source, 2);
+
     const table = document.getElementById('imageTable'); 
-    // set the width of each column
-    table.getElementsByTagName('td')[0].style.width = `${scaledWidth}px`;
-    table.getElementsByTagName('td')[1].style.width = `${scaledWidth}px`;
+    table.getElementsByTagName('td')[0].style.width = `${scaled.w}px`; 
+    table.getElementsByTagName('td')[1].style.width = `${scaled.w}px`;
 }
 
 function hexToRgb(hex) {
@@ -1015,40 +1221,39 @@ var dataHeight = dataWidth;
 var numPerlinDataPoints = dataWidth * dataHeight;
 
 //generate perlin noise field
-function generatePerlinNoise(){
+function generatePerlinNoise(gridSize = 3, resolution = 100){
 
     perlin.seed();
-    perlinDataArray = [];
-
+    let perlinDataArray = [];
 
     //Display perlin noise field on the page
 
     let cnvs = document.getElementById('cnvs');
-    cnvs.width = cnvs.height = maxImageWidth;
+    cnvs.width = cnvs.height = (window.innerWidth * WINDOWREDUCTIONS.w) / 2;
     let ctx = cnvs.getContext('2d');
 
     const COLOR_SCALE = 250;
 
-    let pixel_size = cnvs.width / RESOLUTION;
-    let num_pixels = GRID_SIZE / RESOLUTION;
+    let pixel_size = cnvs.width / resolution;
+    let num_pixels = gridSize / resolution;
 
-    var stepSize = num_pixels / GRID_SIZE;
+    var stepSize = num_pixels / gridSize;
 
-    for (let y = 0; y < GRID_SIZE; y += num_pixels / GRID_SIZE){
+    for (let y = 0; y < gridSize; y += num_pixels / gridSize){
         
         var yDataValue = Math.round(y/stepSize);
         perlinDataArray[yDataValue] = [];
 
-        for (let x = 0; x < GRID_SIZE; x += num_pixels / GRID_SIZE){
+        for (let x = 0; x < gridSize; x += num_pixels / gridSize){
             
-            var xDataValue = Math.round(x/stepSize);
+            var xDataValue = Math.round(x / stepSize);
             
             let v = parseFloat(perlin.get(x, y));
 
             ctx.fillStyle = 'hsl('+v*COLOR_SCALE+',50%,50%)';
             ctx.fillRect(
-                x / GRID_SIZE * cnvs.width,
-                y / GRID_SIZE * cnvs.width,
+                x / gridSize * cnvs.width,
+                y / gridSize * cnvs.width,
                 pixel_size,
                 pixel_size
             );
@@ -1058,151 +1263,48 @@ function generatePerlinNoise(){
 
         }
     }
-
+    return {data: perlinDataArray}
 }
 
-function leftSmear(){
-    var smearStartingX = 0;
-    var smearStartingY = Math.round(Math.random()*actualHeight);
-    var smearWidth = Math.round(Math.random()*actualWidth*(noiseProbability/100));
-    var smearHeight = Math.round(Math.random()*actualHeight*(noiseProbability/100));
-    
-    var pixelSize = Math.ceil(Math.max(actualWidth,actualHeight)/500);
+function initPaletteControls(){
 
-    for(var i=0; i<smearHeight; i+=pixelSize){
+    console.log('Initialising Palette Controls...')
 
-        var currentDataValue = ((smearStartingY+i)*actualWidth + smearStartingX)*4;
+    // The pickers array is initialised here because it's scope doesn't need to be global.
+    let pickers = [
+        document.getElementById('color-picker'),
+        document.getElementById('color-picker2'),
+        document.getElementById('color-picker3'),
+        document.getElementById('color-picker4'),
+        document.getElementById('color-picker5'),
+        document.getElementById('color-picker6')
+    ];
 
-        var newRed = pixels[currentDataValue];
-        var newGreen = pixels[currentDataValue+1];
-        var newBlue = pixels[currentDataValue+2];
+    let paletteChoiceInput = document.getElementById('paletteChoice');
+    paletteChoiceInput.addEventListener('change', (e) => {
+        changePalette(pickers, paletteChoiceInput.value);
+    });
 
-        for(var j=0; j<smearWidth; j+=pixelSize){
+    // Use palettePresets to populate the UI drop-down...
+    palettePresets.forEach((preset) => {
+        const option = document.createElement('option');
+        option.value = preset.name;
+        option.text = preset.displayName;
+        paletteChoiceInput.appendChild(option);
+    });
 
-            var newAlpha = 1 - (j/smearWidth);
-
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(smearStartingX+j, smearStartingY+i, pixelSize, pixelSize);
-
-        }
+    for (let idx = 0; idx < pickers.length; idx++){
+        pickers[idx].addEventListener('change', (e) => {
+            updateColorPickers(idx, pickers, paletteChoiceInput.value);
+        });
     }
-}
-
-function rightSmear(){
-    var smearStartingX = actualWidth-1;
-    var smearStartingY = Math.round(Math.random()*actualHeight);
-    var smearWidth = Math.round(Math.random()*actualWidth*(noiseProbability/100));
-    var smearHeight = Math.round(Math.random()*actualHeight*(noiseProbability/100));
-    
-    var pixelSize = Math.ceil(Math.max(actualWidth,actualHeight)/500);
-
-    for(var i=0; i<smearHeight; i+=pixelSize){
-
-        var currentDataValue = ((smearStartingY+i)*actualWidth + smearStartingX)*4;
-
-        var newRed = pixels[currentDataValue];
-        var newGreen = pixels[currentDataValue+1];
-        var newBlue = pixels[currentDataValue+2];
-
-        for(var j=0; j<smearWidth; j+=pixelSize){
-
-            var newAlpha = 1 - (j/smearWidth);
-
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(smearStartingX-j, smearStartingY+i, pixelSize, pixelSize);
-
-        }
-    }
-}
-
-function topSmear(){
-    var smearStartingX = Math.round(Math.random()*actualWidth);
-    var smearStartingY = 0;
-    var smearWidth = Math.round(Math.random()*actualWidth*(noiseProbability/100));
-    var smearHeight = Math.round(Math.random()*actualHeight*(noiseProbability/100));
-    
-    var pixelSize = Math.ceil(Math.max(actualWidth,actualHeight)/500);
-
-    for(var i=0; i<smearWidth; i += pixelSize){
-
-        var currentDataValue = (smearStartingX + i)*4;
-
-        var newRed = pixels[currentDataValue];
-        var newGreen = pixels[currentDataValue+1];
-        var newBlue = pixels[currentDataValue+2];
-
-        for(var j=0; j<smearHeight; j += pixelSize){
-
-            var newAlpha = 1 - (j/smearHeight);
-
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(smearStartingX+i, smearStartingY+j, pixelSize, pixelSize);
-
-        }
-    }
-}
-
-function bottomSmear(){
-    var smearStartingX = Math.round(Math.random()*actualWidth);
-    var smearStartingY = actualHeight-1;
-    var smearWidth = Math.round(Math.random()*actualWidth*(noiseProbability/100));
-    var smearHeight = Math.round(Math.random()*actualHeight*(noiseProbability/100));
-    
-    var pixelSize = Math.ceil(Math.max(actualWidth,actualHeight)/500);
-
-    for(var i=0; i<smearWidth; i+=pixelSize){
-
-        var currentDataValue = ((smearStartingX+i)+(smearStartingY*actualWidth)) *4;
-
-        var newRed = pixels[currentDataValue];
-        var newGreen = pixels[currentDataValue+1];
-        var newBlue = pixels[currentDataValue+2];
-
-        for(var j=0; j<smearHeight; j+=pixelSize){
-
-            var newAlpha = 1 - (j/smearHeight);
-
-            newCtx.fillStyle = `rgba(${newRed}, ${newGreen}, ${newBlue}, ${newAlpha})`;
-            newCtx.fillRect(smearStartingX+i, smearStartingY-j, pixelSize, pixelSize);
-
-        }
-    }
-}
-
-function initColorPickers(){
-
-    colorPicker.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
-
-    colorPicker2.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
-
-    colorPicker3.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
-
-    colorPicker4.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
-
-    colorPicker5.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
-
-    colorPicker6.addEventListener('change', (e) => {
-        updateColorPickers();
-    });
 
     backgroundColorInput.addEventListener('change', (e) => {
         refresh();
-    });    
+    });  
 }
 
-function changePalette(){
-
-    paletteChoice = paletteChoiceInput.value;
+function changePalette(pickers, paletteChoice){
     
     for (let idx = 0; idx < palettePresets.length; idx++){
         if (palettePresets[idx].name == paletteChoice){
@@ -1215,12 +1317,16 @@ function changePalette(){
         pickers[idx].value = chosenPalette[idx];
     }
     
-    updateColorPickers();    
+    updateColorPickers(-1, pickers, paletteChoice);    
 }
 
-function updateColorPickers(){
+function updateColorPickers(picker = -1, pickers, paletteChoice){
 
-    for (let idx = 0; idx < pickers.length; idx++){
+    let [start, end] = [0, pickers.length];
+
+    if (picker >= 0){ [start, end] = [picker, picker + 1]; };
+
+    for (let idx = start; idx < end; idx++){
         var currentColor = pickers[idx].value;
         chosenPalette[idx] = currentColor;
         var currentColorRGB = hexToRgb(currentColor);
@@ -1229,7 +1335,7 @@ function updateColorPickers(){
 
     //Modify and save changes to custom palette
     var customIndex = palettePresets.findIndex(obj => obj.name === "custom");
-    console.log("Palette choice: "+paletteChoice);
+    console.log("Palette choice: " + paletteChoice);
     if(paletteChoice == "custom"){
         palettePresets[customIndex].palette = chosenPalette;
     }
@@ -1280,12 +1386,12 @@ function initPhotoCarousel(){
     //Autoplay only twice
     let iterationCount = 0;
     let autoplayIntervalId = setInterval(() => {
-    currentSlide++;
-    updateCarousel();
-    iterationCount++;
-    if (iterationCount >= 2) {
-        clearInterval(autoplayIntervalId);
-    }
+        currentSlide++;
+        updateCarousel();
+        iterationCount++;
+        if (iterationCount >= 2) {
+            clearInterval(autoplayIntervalId);
+        }
     }, 4000); //milliseconds before slide change
 
 }
